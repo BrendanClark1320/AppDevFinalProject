@@ -4,27 +4,101 @@
 //
 //  Created by Student on 12/3/23.
 //
-
+import FirebaseAuth
 import XCTest
 @testable import AppDevFinalProj
+import FirebaseFirestore
+import FirebaseCoreExtension
+
 
 final class AppDevFinalProjTests: XCTestCase {
+    class MockAuthManager: AuthManager {
+        override func getCurrentUser() -> ChatRoomUser? {
+            // Mock a current user for testing
+            return ChatRoomUser(uid: "mockUserID", name: "MockUser", email: "mock@example.com", photoURL: "https://example.com/mockphoto.jpg")
+        }
+    }
+    func testIsFromCurrentUser() {
+            // Arrange
+            let currentUserID = "mockUserID"
+            let otherUserID = "otherUserID"
 
+            // Set up a mock message for testing
+            let currentUserMessage = Message(userUid: currentUserID, text: "Test message", photoURL: nil, createdAt: Date())
+            let otherUserMessage = Message(userUid: otherUserID, text: "Another message", photoURL: nil, createdAt: Date())
+
+            // Act
+            // Use the mock AuthManager during testing
+            var originalAuthManager = AuthManager.shared
+            AuthManager.shared = MockAuthManager()
+
+            // Assert
+            XCTAssertTrue(currentUserMessage.isFromCurrentUser(), "Message from current user should return true")
+            XCTAssertFalse(otherUserMessage.isFromCurrentUser(), "Message from other user should return false")
+
+            // Restore the original AuthManager after testing
+            AuthManager.shared = originalAuthManager
+        }
+    
+    var databaseManager: DatabaseManager!
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
+        try super.setUpWithError()
+        // Initialize the DatabaseManager
+        databaseManager = DatabaseManager.shared
     }
-
+    
+    
     override func tearDownWithError() throws {
         // Put teardown code here. This method is called after the invocation of each test method in the class.
+        databaseManager = nil
+        try super.tearDownWithError()
     }
+   
 
-    func testExample() throws {
+    func testForMessages() throws {
+        let testMessage = Message(userUid: "Userid", text: "Test message", photoURL: "testURL", createdAt: Date())
+                let expectation = XCTestExpectation(description: "Message sent successfully")
+
+                // When
+                try databaseManager.sendMessageToDatabase(message: testMessage) { success in
+                    // Then
+                    XCTAssertTrue(success, "Message sending failed")
+                    expectation.fulfill()
+                    
+                }
+                
+            
+                // Wait for an asynchronous expectation to be fulfilled
+                wait(for: [expectation], timeout: 5.0)
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         // Any test you write for XCTest can be annotated as throws and async.
         // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
         // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
     }
+    func testRealTimeUpdates() throws {
+        let expectation = XCTestExpectation(description: "Real-time update received")
+
+        // Start listening for new messages
+        try databaseManager.listenForNewMessagesInDatabase()
+
+        // Simulate a new message being added to the database
+        // ... Add code to simulate a new message addition ...
+        let testMessage = Message(userUid: "newUserID", text: "New test message", photoURL: "newTestURL", createdAt: Date())
+            databaseManager.sendMessageToDatabase(message: testMessage) { success in
+                if success {
+                    // If the message is successfully sent, fulfill the expectation
+                    expectation.fulfill()
+                } else {
+                    XCTFail("Failed to send a new message")
+                }
+            }
+        // Wait for an update or timeout
+        wait(for: [expectation], timeout: 5.0)
+        // Assert based on the received update
+    }
+    
 
     func testPerformanceExample() throws {
         // This is an example of a performance test case.
