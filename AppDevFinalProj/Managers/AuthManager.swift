@@ -24,7 +24,7 @@ enum GoogleSignInError: Error{
 }
 
 final class AuthManager{
-    static let shared = AuthManager()
+    static var shared = AuthManager()
     
     let auth = Auth.auth()
     
