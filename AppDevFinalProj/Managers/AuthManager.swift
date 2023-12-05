@@ -23,7 +23,7 @@ enum GoogleSignInError: Error{
     case authSignInError
 }
 
-final class AuthManager{
+class AuthManager{
     static var shared = AuthManager()
     
     let auth = Auth.auth()
