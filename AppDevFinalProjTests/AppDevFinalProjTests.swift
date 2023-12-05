@@ -9,6 +9,9 @@ import XCTest
 @testable import AppDevFinalProj
 import FirebaseFirestore
 import FirebaseCoreExtension
+import Foundation
+import GoogleSignIn
+import GoogleSignInSwift
 
 
 final class AppDevFinalProjTests: XCTestCase {
@@ -18,27 +21,28 @@ final class AppDevFinalProjTests: XCTestCase {
             return ChatRoomUser(uid: "mockUserID", name: "MockUser", email: "mock@example.com", photoURL: "https://example.com/mockphoto.jpg")
         }
     }
+    
     func testIsFromCurrentUser() {
-            // Arrange
-            let currentUserID = "mockUserID"
-            let otherUserID = "otherUserID"
-
-            // Set up a mock message for testing
-            let currentUserMessage = Message(userUid: currentUserID, text: "Test message", photoURL: nil, createdAt: Date())
-            let otherUserMessage = Message(userUid: otherUserID, text: "Another message", photoURL: nil, createdAt: Date())
-
-            // Act
-            // Use the mock AuthManager during testing
-            var originalAuthManager = AuthManager.shared
-            AuthManager.shared = MockAuthManager()
-
-            // Assert
-            XCTAssertTrue(currentUserMessage.isFromCurrentUser(), "Message from current user should return true")
-            XCTAssertFalse(otherUserMessage.isFromCurrentUser(), "Message from other user should return false")
-
-            // Restore the original AuthManager after testing
-            AuthManager.shared = originalAuthManager
-        }
+        // Arrange
+        let currentUserID = "mockUserID"
+        let otherUserID = "otherUserID"
+        
+        // Set up a mock message for testing
+        let currentUserMessage = Message(userUid: currentUserID, text: "Test message", photoURL: nil, createdAt: Date())
+        let otherUserMessage = Message(userUid: otherUserID, text: "Another message", photoURL: nil, createdAt: Date())
+        
+        // Act
+        // Use the mock AuthManager during testing
+        var originalAuthManager = AuthManager.shared
+        AuthManager.shared = MockAuthManager()
+        
+        // Assert
+        XCTAssertTrue(currentUserMessage.isFromCurrentUser(), "Message from current user should return true")
+        XCTAssertFalse(otherUserMessage.isFromCurrentUser(), "Message from other user should return false")
+        
+        // Restore the original AuthManager after testing
+        AuthManager.shared = originalAuthManager
+    }
     
     var databaseManager: DatabaseManager!
     override func setUpWithError() throws {
@@ -54,23 +58,23 @@ final class AppDevFinalProjTests: XCTestCase {
         databaseManager = nil
         try super.tearDownWithError()
     }
-   
-
+    
+    
     func testForMessages() throws {
         let testMessage = Message(userUid: "Userid", text: "Test message", photoURL: "testURL", createdAt: Date())
-                let expectation = XCTestExpectation(description: "Message sent successfully")
-
-                // When
-                try databaseManager.sendMessageToDatabase(message: testMessage) { success in
-                    // Then
-                    XCTAssertTrue(success, "Message sending failed")
-                    expectation.fulfill()
-                    
-                }
-                
+        let expectation = XCTestExpectation(description: "Message sent successfully")
+        
+        // When
+        try databaseManager.sendMessageToDatabase(message: testMessage) { success in
+            // Then
+            XCTAssertTrue(success, "Message sending failed")
+            expectation.fulfill()
             
-                // Wait for an asynchronous expectation to be fulfilled
-                wait(for: [expectation], timeout: 5.0)
+        }
+        
+        
+        // Wait for an asynchronous expectation to be fulfilled
+        wait(for: [expectation], timeout: 5.0)
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct results.
         // Any test you write for XCTest can be annotated as throws and async.
@@ -79,32 +83,72 @@ final class AppDevFinalProjTests: XCTestCase {
     }
     func testRealTimeUpdates() throws {
         let expectation = XCTestExpectation(description: "Real-time update received")
-
+        
         // Start listening for new messages
         try databaseManager.listenForNewMessagesInDatabase()
-
+        
         // Simulate a new message being added to the database
-        // ... Add code to simulate a new message addition ...
         let testMessage = Message(userUid: "newUserID", text: "New test message", photoURL: "newTestURL", createdAt: Date())
-            databaseManager.sendMessageToDatabase(message: testMessage) { success in
-                if success {
-                    // If the message is successfully sent, fulfill the expectation
-                    expectation.fulfill()
-                } else {
-                    XCTFail("Failed to send a new message")
-                }
+        databaseManager.sendMessageToDatabase(message: testMessage) { success in
+            if success {
+                // If the message is successfully sent, fulfill the expectation
+                expectation.fulfill()
+            } else {
+                XCTFail("Failed to send a new message")
             }
+        }
         // Wait for an update or timeout
         wait(for: [expectation], timeout: 5.0)
         // Assert based on the received update
     }
     
-
+    
+    
     func testPerformanceExample() throws {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
+        let expectation = XCTestExpectation(description: "Real-time update received")
+        
+        // Start measuring time
+        let startTime = Date()
+        
+        // Start listening for new messages
+        try? databaseManager.listenForNewMessagesInDatabase()
+        
+        // Simulate a new message being added to the database
+        let testMessage = Message(userUid: "newUserID", text: "New test message", photoURL: "newTestURL", createdAt: Date())
+        databaseManager.sendMessageToDatabase(message: testMessage) { success in
+            if success {
+                // If the message is successfully sent, fulfill the expectation
+                
+                
+                // Calculate duration after the message is sent and the expectation is fulfilled
+                let endTime = Date()
+                let duration = endTime.timeIntervalSince(startTime)
+                print("Message sending duration: \(duration) seconds")
+                expectation.fulfill()
+            } else {
+                XCTFail("Failed to send a new message")
+            }
         }
+        
+        
+        // Wait for an update or timeout
+       
+        wait(for: [expectation], timeout: 5.0)
     }
+    func testFetchPhotoURL() {
+        // Given
+        let currentUserID = "UserID"
+        
+        let currentUser = "mockUser"
+        
+        let mockMessage = Message(userUid: currentUserID, text: "test message", photoURL: "test.com", createdAt: Date())
+        
+        XCTAssertEqual(URL(string: "test.com"), mockMessage.fetchPhotoURL())
+
+        
+    }
+    
+        
+    
 
 }
