@@ -14,8 +14,7 @@ struct ChatView: View {
     @State var text = ""
 
     var body: some View {
-        ZStack{
-            Color(hex:"#282b30")
+        
             VStack {
                 ScrollViewReader { scrollView in
                     ScrollView(showsIndicators: false) {
@@ -66,7 +65,6 @@ struct ChatView: View {
                     .shadow(radius: 2)
                 }.background(Color(hex:"#424549"))
             }
-        }
         
     }
 }
