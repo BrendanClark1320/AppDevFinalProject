@@ -29,8 +29,7 @@ struct ChatView: View {
                         }
                         
                     }
-                    .edgesIgnoringSafeArea(.bottom)
-                    .background(Color(hex: "#282b30"))
+                    .background(Color(.white))
                 }
                 HStack {
                     TextField("", text: $text,axis: .vertical)
