@@ -51,9 +51,14 @@ final class AppDevFinalProjTests: XCTestCase {
             }
         }
     }
-    
+    func testGetCurrentUser() {
+        let currentUserID = "mockUserID"
+        var originalAuthManager = AuthManager.shared
+        AuthManager.shared = MockAuthManager()
+        XCTAssertEqual(currentUserID, AuthManager.shared.getCurrentUser()?.uid)
+        AuthManager.shared = originalAuthManager
+    }
     func testIsFromCurrentUser() {
-        // Arrange
         let currentUserID = "mockUserID"
         let otherUserID = "otherUserID"
         
@@ -61,16 +66,13 @@ final class AppDevFinalProjTests: XCTestCase {
         let currentUserMessage = Message(userUid: currentUserID, text: "Test message", photoURL: nil, createdAt: Date())
         let otherUserMessage = Message(userUid: otherUserID, text: "Another message", photoURL: nil, createdAt: Date())
         
-        // Act
         // Use the mock AuthManager during testing
         var originalAuthManager = AuthManager.shared
         AuthManager.shared = MockAuthManager()
         
-        // Assert
         XCTAssertTrue(currentUserMessage.isFromCurrentUser(), "Message from current user should return true")
         XCTAssertFalse(otherUserMessage.isFromCurrentUser(), "Message from other user should return false")
         
-        // Restore the original AuthManager after testing
         AuthManager.shared = originalAuthManager
     }
     
@@ -78,7 +80,6 @@ final class AppDevFinalProjTests: XCTestCase {
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
         try super.setUpWithError()
-        // Initialize the DatabaseManager
         databaseManager = DatabaseManager.shared
     }
     
@@ -140,7 +141,6 @@ final class AppDevFinalProjTests: XCTestCase {
         }
         // Wait for an update or timeout
         wait(for: [expectation], timeout: 5.0)
-        // Assert based on the received update
     }
     
     
@@ -170,26 +170,12 @@ final class AppDevFinalProjTests: XCTestCase {
                 XCTFail("Failed to send a new message")
             }
         }
-        
-        
-        // Wait for an update or timeout
-       
         wait(for: [expectation], timeout: 5.0)
     }
     func testFetchPhotoURL() {
-        // Given
         let currentUserID = "UserID"
-        
         let currentUser = "mockUser"
-        
         let mockMessage = Message(userUid: currentUserID, text: "test message", photoURL: "test.com", createdAt: Date())
-        
         XCTAssertEqual(URL(string: "test.com"), mockMessage.fetchPhotoURL())
-
-        
     }
-    
-        
-    
-
 }
