@@ -14,8 +14,7 @@ enum FetchMessagesError: Error{
     case snapshotError
 }
 
-
-final class DatabaseManager{
+class DatabaseManager{
     
     static let shared = DatabaseManager()
     
