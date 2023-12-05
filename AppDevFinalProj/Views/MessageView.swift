@@ -61,7 +61,7 @@ struct MessageView: View {
                 HStack{
                     Text(message.text)
                         .padding()
-                        .background(Color(hex:"#424549"))
+                        .background(Color(hex:"#40934C"))
                         .cornerRadius(20)
                 }
                 .frame(maxWidth: 260, alignment: .leading)
