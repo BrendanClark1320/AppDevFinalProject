@@ -18,7 +18,37 @@ final class AppDevFinalProjTests: XCTestCase {
     class MockAuthManager: AuthManager {
         override func getCurrentUser() -> ChatRoomUser? {
             // Mock a current user for testing
-            return ChatRoomUser(uid: "mockUserID", name: "MockUser", email: "mock@example.com", photoURL: "https://example.com/mockphoto.jpg")
+            return ChatRoomUser(uid: "mockUserID", name: "MockUser", email: "mock@loyola.com", photoURL: "photourl.jpg")
+        }
+    }
+    
+    class MockDatabaseManager: DatabaseManager {
+        var shouldSucceed = true
+        override func sendMessageToDatabase(message: Message, completion: @escaping (Bool) -> Void){
+            let data = [
+                "text": message.text,
+                "userUid": message.userUid,
+                "photoURL": message.photoURL,
+                "createdAt": Timestamp(date:message.createdAt)
+            ] as [String : Any]
+            messageRef.addDocument(data: data){ error in
+                guard error == nil else{
+                    completion(false)
+                    return
+                }
+                completion(true)
+            }
+        }
+        override func fetchMessages(completion: @escaping (Result<[Message], FetchMessagesError>)-> Void){
+            messageRef.order(by: "createdAt", descending: true).limit(to: 25).getDocuments{[weak self] snapshot, error in
+                guard let snapshot = snapshot, let strongSelf = self,error == nil else{
+                    completion(.failure(.snapshotError))
+                    return
+                }
+                strongSelf.listenForNewMessagesInDatabase()
+                let messages = strongSelf.createMessagesFromFirebaseSnapshot(snapshot: snapshot)
+                completion(.success(messages))
+            }
         }
     }
     
@@ -60,27 +90,38 @@ final class AppDevFinalProjTests: XCTestCase {
     }
     
     
-    func testForMessages() throws {
-        let testMessage = Message(userUid: "Userid", text: "Test message", photoURL: "testURL", createdAt: Date())
-        let expectation = XCTestExpectation(description: "Message sent successfully")
-        
-        // When
-        try databaseManager.sendMessageToDatabase(message: testMessage) { success in
-            // Then
-            XCTAssertTrue(success, "Message sending failed")
+    func testSendMessageToDatabase() throws {
+        let mockDatabaseManager = MockDatabaseManager()
+        let message = Message(userUid: "ID", text: "test message!", photoURL: "test.com", createdAt: Date())
+                
+        let expectation = XCTestExpectation(description: "Sending message to database")
+
+        mockDatabaseManager.sendMessageToDatabase(message: message) { success in
+            XCTAssertTrue(success)
+                    
             expectation.fulfill()
-            
         }
-        
-        
-        // Wait for an asynchronous expectation to be fulfilled
+                
+        // Wait for the expectation to be fulfilled or timeout
         wait(for: [expectation], timeout: 5.0)
-        // This is an example of a functional test case.
-        // Use XCTAssert and related functions to verify your tests produce the correct results.
-        // Any test you write for XCTest can be annotated as throws and async.
-        // Mark your test throws to produce an unexpected failure when your test encounters an uncaught error.
-        // Mark your test async to allow awaiting for asynchronous code to complete. Check the results with assertions afterwards.
     }
+    
+    func testFetchMessagesSuccess() {
+        let mockDatabaseManager = MockDatabaseManager()
+        mockDatabaseManager.shouldSucceed = true
+        let expectation = XCTestExpectation(description: "Fetching messages")
+        mockDatabaseManager.fetchMessages { result in
+            switch result {
+            case .success(let messages):
+                XCTAssertFalse(messages.isEmpty)
+            case .failure(let error):
+                XCTFail("Fetch messages test failed \(error)")
+            }
+            expectation.fulfill()
+        }
+        wait(for: [expectation], timeout: 5.0)
+    }
+    
     func testRealTimeUpdates() throws {
         let expectation = XCTestExpectation(description: "Real-time update received")
         
