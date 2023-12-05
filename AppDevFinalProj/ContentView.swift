@@ -30,7 +30,7 @@ struct ContentView: View{
                 ZStack {
                     ChatView()
                 }
-                .navigationTitle("Chatroom")
+                .navigationTitle("Loyola Chat")
                 //.toolbarColorScheme(<#T##colorScheme: ColorScheme?##ColorScheme?#>, for: <#T##ToolbarPlacement...##ToolbarPlacement#>)
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar{
